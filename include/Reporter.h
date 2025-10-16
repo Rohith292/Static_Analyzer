@@ -5,5 +5,6 @@
 
 class Reporter{
     public:
-        void generateReport(const std::vector<AnalysisIssue>& issues);
+        void generateConoleReport(const std::vector<AnalysisIssue>& issues);
+        void generateHTMLReport(const std::vector<AnalysisIssue>& issues, const std::string& fileName);
 };

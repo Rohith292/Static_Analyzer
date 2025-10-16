@@ -56,7 +56,7 @@ string getFileExtension(const string& fileName){
     return fileName.substr(dot_pos+1);
 }
 
-void Dispatcher::analyze(const string& fileName){
+void Dispatcher::analyze(const string& fileName,const string& format){
     string extension=getFileExtension(fileName);
 
     ifstream file(fileName);
@@ -87,7 +87,12 @@ void Dispatcher::analyze(const string& fileName){
         }
         std::cout<<"---------------------------"<<std::endl;
         auto issues=analyzer.analyze(*ast);
-        reporter.generateReport(issues);
+        if(format=="html"){
+            reporter.generateHTMLReport(issues,"report.html");
+
+        }else{
+            reporter.generateConoleReport(issues);
+        }
     }
      else if (extension == "py") {
         std::cout << "Python analysis is not implemented yet." << std::endl;

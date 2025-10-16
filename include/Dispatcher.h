@@ -3,5 +3,5 @@
 
 class Dispatcher{
     public:
-        void analyze(const std::string& fileName);
+        void analyze(const std::string& fileName, const std::string& format);
 };
