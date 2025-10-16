@@ -36,19 +36,31 @@ This project is built using g++.
 
 Given the following code in `samples/test.cpp`:
 ```cpp
-int main() {
-    int x = 10;
-    int y = 20; // An unused variable
+int main(){
+    int x=10;
+    int y=20;
+    if(x){
+        int z=30;
+    }
     return 0;
 }
 ```
 
 The tool will produce the following output:
 ```
-Analyzing C++ file...
+Analyzing c++ file..                                              
+----Abstract Syntax Tree---                                       
+[Program]
+  [Function Declaration] -> name: main
+    [Variable Declaration] -> name: x
+    [Variable Declaration] -> name: y
+    [If Statement]
+      Condition: x
+      [Variable Declaration] -> name: z
+---------------------------
 
 --- Analysis Report ---
-[Issue] Unused variable: x
 [Issue] Unused variable: y
+[Issue] Unused variable: z
 -----------------------
 ```
