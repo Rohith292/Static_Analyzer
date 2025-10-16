@@ -12,7 +12,8 @@ enum class NodeType {
     PROGRAM,
     FUNCTION_DECLARATION,
     VARIABLE_DECLARATION,
-    STATEMENT
+    STATEMENT,
+    IF_STATEMENT, //added the IF_STATEMENT for next stage
 };
 
 // Represents a single node in our abstract syntax tree

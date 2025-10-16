@@ -10,6 +10,43 @@
 #include<string>
 using namespace std;
 
+void printAst(const AstNode& node, int indent = 0) {
+    for (int i = 0; i < indent; ++i) {
+        std::cout << "  ";
+    }
+    
+    switch (node.type) {
+        case NodeType::PROGRAM:   
+            std::cout << "[Program]" << std::endl; 
+            break;
+        case NodeType::FUNCTION_DECLARATION:
+            std::cout << "[Function Declaration] -> name: " << node.value << std::endl;
+            break;
+        case NodeType::VARIABLE_DECLARATION:
+            std::cout << "[Variable Declaration] -> name: " << node.value << std::endl; 
+            break;
+        case NodeType::IF_STATEMENT:
+            std::cout << "[If Statement]" << std::endl;
+            if (!node.children.empty()) {
+                for (int i = 0; i < indent + 1; ++i) std::cout << "  ";
+                std::cout << "Condition: " << node.children[0]->value << std::endl;
+                
+                for (size_t i = 1; i < node.children.size(); ++i) {
+                    printAst(*node.children[i], indent + 1);
+                }
+            }
+            break;
+        case NodeType::STATEMENT: 
+            std::cout << "[Statement] -> " << node.value << std::endl; 
+            break;
+    }
+
+    if (node.type != NodeType::IF_STATEMENT) {
+        for (const auto& child : node.children) {
+            printAst(*child, indent + 1);
+        }
+    }
+}
 //helper function to get the file extension
 string getFileExtension(const string& fileName){
     size_t dot_pos=fileName.find_last_of(".");
@@ -43,6 +80,12 @@ void Dispatcher::analyze(const string& fileName){
 
         auto tokens =tokenizer.tokenize(source_code);
         auto ast=parser.parse(tokens);
+        //lines to print AST
+        std::cout<<"----Abstract Syntax Tree---"<<std::endl;
+        if(ast){
+            printAst(*ast);
+        }
+        std::cout<<"---------------------------"<<std::endl;
         auto issues=analyzer.analyze(*ast);
         reporter.generateReport(issues);
     }
