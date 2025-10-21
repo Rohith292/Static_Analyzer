@@ -3,6 +3,8 @@
 #include "Parser.h"
 #include "Analyzer.h"
 #include "Reporter.h"
+#include "JavaParser.h"
+#include "JavaTokenizer.h"
 
 #include<iostream>
 #include<fstream>
@@ -97,7 +99,30 @@ void Dispatcher::analyze(const string& fileName,const string& format){
      else if (extension == "py") {
         std::cout << "Python analysis is not implemented yet." << std::endl;
     } else if (extension == "java") {
-        std::cout << "Java analysis is not implemented yet." << std::endl;
+
+        JavaTokenizer tokenizer;
+        JavaParser parser;//using the new parser
+        Analyzer analyzer;
+        Reporter reporter;
+        auto tokens=tokenizer.tokenize(source_code);
+        auto ast=parser.parse(tokens);
+
+        //for now we will just print the tokens
+        std::cout<<"---java tokens found---"<<std::endl;
+        for(const auto& token:tokens){
+            std::cout<<"line" <<token.line_number<<" | Value: '"<<token.value<<"'"<<std::endl;
+        }
+        std::cout<<"--------------------"<<std::endl;
+
+        // We can reuse our existing printAst function to see the result!
+    std::cout << "--- Abstract Syntax Tree ---" << std::endl;
+    if (ast) {
+        printAst(*ast);
+    }
+
+    //run the analysis and report the issues
+    auto issues=analyzer.analyze(*ast);
+    reporter.generateConoleReport(issues);
     } else {
         std::cerr << "Error: Unsupported file type '" << extension << "'" << std::endl;
     }
