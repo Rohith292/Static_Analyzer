@@ -18,6 +18,7 @@ private:
     // HELPER DECLARATIONS
     void collectDirectDeclarations(const AstNode& scopeNode, std::set<std::pair<std::string, int>>& declaredVariables);
     void collectVariableUsages(const AstNode& node, std::set<std::string>& usedVariables);
+    void collectFunctionCalls(const AstNode& node, std::set<std::string>& calledFunctions);
 
     std::vector<AnalysisIssue> m_issues;
 };

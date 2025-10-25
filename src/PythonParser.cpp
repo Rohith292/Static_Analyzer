@@ -96,6 +96,8 @@ std::unique_ptr<AstNode> PythonParser::parseStatement() {
             node->type = NodeType::STATEMENT;
             node->value = "print";
             
+            node->type = NodeType::FUNCTION_CALL; // Was: NodeType::STATEMENT
+            node->value = "print";
             // Consume the rest of the print statement
             while(peek().type != TokenType::INDENT && peek().type != TokenType::DEDENT && !isAtEnd()) {
                 advance();

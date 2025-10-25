@@ -26,4 +26,5 @@ private:
     std::unique_ptr<AstNode>parseFunctionDeclaration();
     std::unique_ptr<AstNode>parseVariableDeclaration();
     std::unique_ptr<AstNode>parseIfStatement();
+    std::unique_ptr<AstNode>parseFunctionCall();
 };

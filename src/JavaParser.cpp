@@ -58,6 +58,23 @@ std::unique_ptr<AstNode> JavaParser::parseMethodDeclaration() {
     return node;
 }
 
+std::unique_ptr<AstNode> JavaParser::parseFunctionCall() {
+    // We already consumed the identifier (e.g., "myCall")
+    Token name = m_tokens[current - 1]; // Get the token we just passed
+
+    auto node = std::make_unique<AstNode>();
+    node->type = NodeType::FUNCTION_CALL;
+    node->value = name.value;
+    node->line_number = name.line_number;
+
+    // Consume the rest of the function call (the "()" and ";")
+    while(peek().value != ";") {
+        advance();
+    }
+    advance(); // Consume the ";"
+    return node;
+}
+
 std::unique_ptr<AstNode> JavaParser::parseStatement(){
     //look for a method declaration
     if(peek().value=="public"){
@@ -68,6 +85,10 @@ std::unique_ptr<AstNode> JavaParser::parseStatement(){
     if(peek().value=="int"){
         advance();//consume 'int'
         return parseVariableDeclaration();
+    }
+    if (peek().type == TokenType::IDENTIFIER && m_tokens[current + 1].value == "(") {
+        advance(); // Consume the identifier
+        return parseFunctionCall();
     }
     advance();
     return nullptr;

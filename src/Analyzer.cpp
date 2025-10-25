@@ -29,11 +29,25 @@ void Analyzer::collectVariableUsages(const AstNode& node, std::set<std::string>&
 }
 
 void Analyzer::analyzeScope(const AstNode& scopeNode) {
-    std::set<std::pair<std::string, int>> declaredVariables; // <<< This type changed
+    std::set<std::pair<std::string, int>> declaredVariables; 
     std::set<std::string> usedVariables;
+
+    //new logic for functions
+    std::set<std::pair<std::string,int>>declaredFunctions;
+    std::set<std::string> calledFunctions;
 
     collectDirectDeclarations(scopeNode, declaredVariables);
     collectVariableUsages(scopeNode, usedVariables);
+    collectFunctionCalls(scopeNode,calledFunctions);
+
+    for (const auto& child : scopeNode.children) {
+        if (child->type == NodeType::FUNCTION_DECLARATION) {
+            // We'll ignore "main" as it's the entry point
+            if (child->value != "main") {
+                declaredFunctions.insert({child->value, child->line_number});
+            }
+        }
+    }
 
     for (const auto& varPair : declaredVariables) {
         std::string varName = varPair.first;
@@ -43,6 +57,25 @@ void Analyzer::analyzeScope(const AstNode& scopeNode) {
             // Now we can create an issue with the correct line number
             m_issues.push_back({ "Unused variable: " + varName, varLine });
         }
+    }
+    for (const auto& funcPair : declaredFunctions) {
+        std::string funcName = funcPair.first;
+        int funcLine = funcPair.second;
+        
+        // If the declared function is NOT in the called set, report it.
+        if (calledFunctions.find(funcName) == calledFunctions.end()) {
+            m_issues.push_back({ "Unused function: " + funcName, funcLine });
+        }
+    }
+}
+
+void Analyzer::collectFunctionCalls(const AstNode& node, std::set<std::string>& calledFunctions) {
+    if (node.type == NodeType::FUNCTION_CALL) {
+        calledFunctions.insert(node.value);
+    }
+    // Recurse into all children to find more calls
+    for (const auto& child : node.children) {
+        collectFunctionCalls(*child, calledFunctions);
     }
 }
 

@@ -33,34 +33,58 @@ std::unique_ptr<AstNode> Parser::parseVariableDeclaration() {
     return node;
 }
 
+//new function to parse the function calls
+std::unique_ptr<AstNode> Parser::parseFunctionCall() {
+    // We already consumed the identifier, which is at tokens[current - 1]
+    Token name = previous();
+
+    auto node = std::make_unique<AstNode>();
+    node->type = NodeType::FUNCTION_CALL;
+    node->value = name.value;
+    node->line_number = name.line_number;
+
+    // Consume the rest of the function call (the "()" and ";")
+    while(peek().value != ";") {
+        advance();
+    }
+    advance(); // Consume the ";"
+    return node;
+}
+
+
+// Replace the existing parseStatement function in src/Parser.cpp with this one
+
 std::unique_ptr<AstNode> Parser::parseFunctionDeclaration() {
-    Token name = advance();
-    advance(); // Consume '('
-    advance(); // Consume ')'
+    // Assumes 'int' (or a type) has been consumed
+    Token name = advance(); // Consume function name
+    
+    // Consume everything up to the opening brace '{'
+    while(peek().value != "{") {
+        advance();
+    }
     advance(); // Consume '{'
 
     auto node = std::make_unique<AstNode>();
     node->type = NodeType::FUNCTION_DECLARATION;
     node->value = name.value;
+    node->line_number = name.line_number; // <<< THIS FIXES THE "LINE 0" BUG
 
-    while (peek().value != "}") {
+    // Parse statements inside the function body
+    while(peek().value != "}") {
         auto stmt = parseStatement();
-        if (stmt) { // FIX: Only add valid statements to the tree
+        if (stmt) {
             node->children.push_back(std::move(stmt));
         }
     }
-
     advance(); // Consume '}'
     return node;
 }
-
-// Replace the existing parseStatement function in src/Parser.cpp with this one
 
 std::unique_ptr<AstNode> Parser::parseStatement() {
     // Check if the current statement is a keyword 'int'.
     if (peek().type == TokenType::KEYWORD && peek().value == "int") {
         // Look ahead to distinguish between a function and a variable.
-        if (tokens.size() > current + 2 && tokens[current + 2].value == "(") {
+        if (tokens[current + 2].value == "(") {
             advance(); // Consume 'int'
             return parseFunctionDeclaration();
         } else {
@@ -73,7 +97,10 @@ std::unique_ptr<AstNode> Parser::parseStatement() {
         advance(); // Consume 'if'
         return parseIfStatement();
     }
-    
+    else if (peek().type == TokenType::IDENTIFIER && tokens[current + 1].value == "(") {
+        advance(); // Consume the identifier
+        return parseFunctionCall();
+    }
     // If we don't recognize the statement, we advance to avoid getting stuck.
     advance();
     return nullptr;

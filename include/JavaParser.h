@@ -22,4 +22,5 @@ class JavaParser{
         std::unique_ptr<AstNode>parseStatement();
         std::unique_ptr<AstNode>parseMethodDeclaration();
         std::unique_ptr<AstNode>parseVariableDeclaration();
+        std::unique_ptr<AstNode>parseFunctionCall();
 };
