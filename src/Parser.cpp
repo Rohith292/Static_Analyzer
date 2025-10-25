@@ -29,6 +29,7 @@ std::unique_ptr<AstNode> Parser::parseVariableDeclaration() {
     auto node = std::make_unique<AstNode>();
     node->type = NodeType::VARIABLE_DECLARATION;
     node->value = name.value;
+    node->line_number=name.line_number;
     return node;
 }
 

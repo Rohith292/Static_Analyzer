@@ -23,4 +23,5 @@ struct AstNode {
 
     // Each node can have multiple children forming a tree structure
     std::vector<std::unique_ptr<AstNode>> children; // Use std::vector and std::unique_ptr
+    int line_number=0;
 };

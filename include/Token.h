@@ -12,7 +12,9 @@ enum class TokenType{
     SEPARATOR,  //,{..}
     LITERAL,    //10,"hello"
     COMMENT,
-    UNKNOWN     //for any character that dont fit
+    UNKNOWN,    //for any character that doesnt fit
+    INDENT,
+    DEDENT    
 };
 
 //a struct to hold information about a single token

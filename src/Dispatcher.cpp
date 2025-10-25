@@ -5,12 +5,29 @@
 #include "Reporter.h"
 #include "JavaParser.h"
 #include "JavaTokenizer.h"
+#include "PythonTokenizer.h"
+#include "PythonParser.h"
 
 #include<iostream>
 #include<fstream>
 #include<sstream>
 #include<string>
 using namespace std;
+
+// Helper function to convert TokenType to string
+std::string tokenTypeToString(TokenType type) {
+    switch (type) {
+        case TokenType::KEYWORD:    return "KEYWORD";
+        case TokenType::IDENTIFIER: return "IDENTIFIER";
+        case TokenType::OPERATOR:   return "OPERATOR";
+        case TokenType::SEPARATOR:  return "SEPARATOR";
+        case TokenType::LITERAL:    return "LITERAL";
+        case TokenType::COMMENT:    return "COMMENT";
+        case TokenType::INDENT:     return "INDENT";
+        case TokenType::DEDENT:     return "DEDENT";
+        default:                    return "UNKNOWN";
+    }
+}
 
 void printAst(const AstNode& node, int indent = 0) {
     for (int i = 0; i < indent; ++i) {
@@ -90,15 +107,42 @@ void Dispatcher::analyze(const string& fileName,const string& format){
         std::cout<<"---------------------------"<<std::endl;
         auto issues=analyzer.analyze(*ast);
         if(format=="html"){
-            reporter.generateHTMLReport(issues,"report.html");
+            reporter.generateHTMLReport(issues,"report.html",source_code);
 
         }else{
             reporter.generateConoleReport(issues);
         }
     }
-     else if (extension == "py") {
-        std::cout << "Python analysis is not implemented yet." << std::endl;
-    } else if (extension == "java") {
+    
+       else if (extension == "py") {
+    std::cout << "Analyzing Python file..." << std::endl;
+    
+    // Python Pipeline
+    PythonTokenizer tokenizer;
+    PythonParser parser;
+    Analyzer analyzer;   // <<< ADD THIS
+    Reporter reporter;   // <<< ADD THIS
+
+    auto tokens = tokenizer.tokenize(source_code);
+    auto ast = parser.parse(tokens);
+
+    // Optional: Print the AST
+    std::cout << "--- Abstract Syntax Tree ---" << std::endl;
+    if (ast) {
+        printAst(*ast);
+    }
+    std::cout << "--------------------------" << std::endl;
+    
+    // Run the analysis and report the issues
+    auto issues = analyzer.analyze(*ast);
+   if(format=="html"){
+            reporter.generateHTMLReport(issues,"report.html",source_code);
+
+        }else{
+            reporter.generateConoleReport(issues);
+        }
+}
+    else if (extension == "java") {
 
         JavaTokenizer tokenizer;
         JavaParser parser;//using the new parser
@@ -122,7 +166,12 @@ void Dispatcher::analyze(const string& fileName,const string& format){
 
     //run the analysis and report the issues
     auto issues=analyzer.analyze(*ast);
-    reporter.generateConoleReport(issues);
+    if(format=="html"){
+            reporter.generateHTMLReport(issues,"report.html",source_code);
+
+        }else{
+            reporter.generateConoleReport(issues);
+        }
     } else {
         std::cerr << "Error: Unsupported file type '" << extension << "'" << std::endl;
     }

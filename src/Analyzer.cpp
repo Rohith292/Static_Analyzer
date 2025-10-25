@@ -1,51 +1,59 @@
+// src/Analyzer.cpp
 #include "Analyzer.h"
 #include <set>
+#include <vector>
 
-// This new recursive helper function will find all variable declarations
-// inside a given node and all its children.
-void collectVariableDeclarations(const AstNode& node, std::set<std::string>& declaredVariables) {
-    if (node.type == NodeType::VARIABLE_DECLARATION) {
-        declaredVariables.insert(node.value);
-    }
-    
-    // Continue the search into all children of the current node
-    for (const auto& child : node.children) {
-        collectVariableDeclarations(*child, declaredVariables);
-    }
-}
-
-//finds all variables usages inside a node and its children
-void collectVariableUsages(const AstNode& node, std::set<std::string>& usedVariables){
-    //the only form of usage right now is the if statement
-    if(node.type==NodeType::IF_STATEMENT && !node.children.empty()){
-        //conditions value is the name of the variable being used
-        usedVariables.insert(node.children[0]->value);
-    }
-    for(const auto& child :node.children){
-        collectVariableUsages(*child,usedVariables);
-    }
-}
-
-void Analyzer::traverse(const AstNode& node) {
-    if (node.type == NodeType::FUNCTION_DECLARATION) {
-        std::set<std::string> declaredVariables;
-        std::set<std::string> usedVariables;
-
-        // 1. Collect all declarations and usages within the function's scope.
-        collectVariableDeclarations(node, declaredVariables);
-        collectVariableUsages(node, usedVariables);
-
-        // 2. Find the difference: variables that were declared but never used.
-        for (const auto& varName : declaredVariables) {
-            // Check if the declared variable exists in the set of used variables.
-            if (usedVariables.find(varName) == usedVariables.end()) {
-                // If it's not found (.find() returns .end()), it's an unused variable.
-                m_issues.push_back({"Unused variable: " + varName});
-            }
+// This helper finds variables DECLARED *directly* in this scope.
+// It is NOT recursive.
+void Analyzer::collectDirectDeclarations(const AstNode& scopeNode, std::set<std::pair<std::string, int>>& declaredVariables) {
+    for (const auto& child : scopeNode.children) {
+        if (child->type == NodeType::VARIABLE_DECLARATION) {
+            // Insert both the name and the line number
+            declaredVariables.insert({child->value, child->line_number});
         }
     }
+}
 
-    // Continue traversing to find other functions in the program.
+// This helper finds variables USED *anywhere* inside this scope.
+// It IS recursive.
+void Analyzer::collectVariableUsages(const AstNode& node, std::set<std::string>& usedVariables) {
+    // Check for usage in 'if' condition
+    if (node.type == NodeType::IF_STATEMENT && !node.children.empty()) {
+        usedVariables.insert(node.children[0]->value);
+    }
+    
+    // Recurse into all children to find more usages
+    for (const auto& child : node.children) {
+        collectVariableUsages(*child, usedVariables);
+    }
+}
+
+void Analyzer::analyzeScope(const AstNode& scopeNode) {
+    std::set<std::pair<std::string, int>> declaredVariables; // <<< This type changed
+    std::set<std::string> usedVariables;
+
+    collectDirectDeclarations(scopeNode, declaredVariables);
+    collectVariableUsages(scopeNode, usedVariables);
+
+    for (const auto& varPair : declaredVariables) {
+        std::string varName = varPair.first;
+        int varLine = varPair.second;
+        
+        if (usedVariables.find(varName) == usedVariables.end()) {
+            // Now we can create an issue with the correct line number
+            m_issues.push_back({ "Unused variable: " + varName, varLine });
+        }
+    }
+}
+
+// The traverse function's only job is to find scopes
+void Analyzer::traverse(const AstNode& node) {
+    // A scope is either the Program (global) or a Function
+    if (node.type == NodeType::PROGRAM || node.type == NodeType::FUNCTION_DECLARATION) {
+        analyzeScope(node);
+    }
+
+    // Continue traversing to find nested scopes
     for (const auto& child : node.children) {
         traverse(*child);
     }
@@ -53,6 +61,6 @@ void Analyzer::traverse(const AstNode& node) {
 
 std::vector<AnalysisIssue> Analyzer::analyze(const AstNode& root) {
     m_issues.clear();
-    traverse(root);
+    traverse(root); // This will start the traversal at the [Program] node
     return m_issues;
 }

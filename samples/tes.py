@@ -1,3 +1,8 @@
-import numpy as np
+# A simple python function
+def my_function():
+    x = 10
+    if x == 10:
+        print("hello")
+    print("done")
 
-print("Hello world")
+y = 20
